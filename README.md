@@ -1,10 +1,7 @@
-# randomness
-Dart package for random strings and numbers, with weights
-
 Random strings, numbers. RNG with weights. Cryptographically secure options.
 
 ## Getting started
-Add ```randomness: ^0.1.0``` to pubspec.yaml and paste
+Add ```randomness: ^0.1.3``` to pubspec.yaml and paste
 ```import 'package:randomness/randomness.dart';```
 
 ## Usage
@@ -77,7 +74,7 @@ Randomness.randomString(length: 50, cryptographicallySecure: true, weights: {'A'
 
 
 
-random element from List, weights may not work with certain data types.
+random element from List, weights may not work with certain data types:
 ```dart
 Randomness.randomFromList([{1,2}, 'a', 3], weights: {'a': 1, everythingElse: 1}, cryptographicallySecure: true)
 //a
@@ -91,60 +88,3 @@ The following gives average of half 4's, half 5, 6, 7, 8, or 9:
 Randomness.randomNDigits(numberOfDigits: 100, excludeDigits: {0,1,2,3}, weights: {4:1, everythingElse:1})
 //4944445978444496449444486964474547474444767454648456444448886854446774444444648654448475857444494895
 ```
-
-
-
-
-### Some helper functions
-
-
-Returns Map of occurrences of elements in a List:
-```dart
-countElementsInList([1, 2, 3, 1.0, 1])
-//{1: {type: int, count: 2}, 1.0: {type: double, count: 1}, 2: {type: int, count: 1}, 3: {type: int, count: 1}}
-countElementsInList([1, 2, 3, 1.0, 1], includeIndexes: true)
-//{1: {type: int, count: 2, indexes: [0, 4]}, 1.0: {type: double, count: 1, indexes: [3]}, 2: {type: int, count: 1, indexes: [1]}, 3: {type: int, count: 1, indexes: [2]}}
-```
-
-Returns a List of all elements in a given range inclusive:
-```dart
-getRange([1,10])
-//[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-```
-
-Returns shuffled List, cryptographically secure option:
-```dart
-shuffleList([1, 2, 3, 1.0, 1], cryptographicallySecure: true)
-//[3, 2, 1.0, 1, 1]
-```
-
-
-printMapElements or printListElements for each element on new line
-
-printMapElements:
-```dart
-List randomNums = [];
-for(int i = 0; i < 100; i++){
-randomNums.add(Randomness.randomInt(include: {0,1,2,3}, weights: {0:7, 1:1, 2:1, 3:1}));
-}
-Map results = countElementsInList(randomNums);
-printMapElements(results);
-/*
-0: {type: int, count: 68}
-1: {type: int, count: 14}
-2: {type: int, count: 13}
-3: {type: int, count: 5}
-* */
-```
-
-printListElements:
-```dart
-printListElements([1,2,3]);
-/*
-1
-2
-3
-*/
-```
-
-

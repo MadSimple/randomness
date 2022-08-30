@@ -47,34 +47,9 @@ void main() {
   ${Randomness.randomNDigits(numberOfDigits: 100, excludeDigits: {0,1,2,3}, weights: {4:1, everythingElse:1})}
   Gives average of half 4's, half 5, 6, 7, 8, or 9
   
-  
-  
-  ----------SOME HELPER FUNCTIONS----------
-  
-  
-  
-
-  Returns Map of occurrences of elements in a List
-  ${countElementsInList([1, 2, 3, 1.0, 1])}
-  ${countElementsInList([1, 2, 3, 1.0, 1],includeIndexes: true)}
-  
-  Returns a List of all elements in a given range inclusive
-  ${getRange([1,10])}
-  
-  Returns shuffled List, cryptographically secure option
-  ${shuffleList([1, 2, 3, 1.0, 1],cryptographicallySecure: true)}
   ''');
 
-  print('printMapElements or printListElements for each element on new line');
-  List randomNums = [];
-  for(int i = 0; i < 100; i++){
-    randomNums.add(Randomness.randomInt(include: {0,1,2,3}, weights: {0:7, 1:1, 2:1, 3:1}));
-  }
-  Map results = countElementsInList(randomNums);
-  printMapElements(results);
 
-  print('\nList elements');
-  printListElements([1,2,3]);
 
 
 }
