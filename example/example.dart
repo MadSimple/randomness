@@ -1,26 +1,37 @@
-import 'package:heart/heart.dart';
+import 'package:randomness/randomness.dart';
 
-/// Small sample of package features
 void main() {
-  List<String> cardValues =
-      ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'] * 4;
+  double balance = 100;
 
-  List<String> cardSuits =
-      ['spades'] * 13 + ['hearts'] * 13 + ['diamonds'] * 13 + ['clubs'] * 13;
+  int a = randomInt(-100, 201, onResult: (result) => balance += result);
 
-  List deckOfCards = zip([cardValues, cardSuits]);
-  List shuffledDeck = deckOfCards.shuffled();
+  double b = randomDouble(-100, 200, onResult: (result) => balance += result);
 
-  print('Sorted deck: \n$deckOfCards\n');
+  int c = weighted([100, 100, -100], onResult: (result) => balance += result);
 
-  print('Shuffled deck: \n$shuffledDeck\n');
+  bool d = weightedBool(
+      trueWeight: 2,
+      falseWeight: 1,
+      onResult: (result) => balance += result == true ? 100 : -100);
 
-  List redCards = shuffledDeck
-      .filter((card) => card.contains('hearts') || card.contains('diamonds'));
+  int e = weightedFromMap({100: 2, -100: 1},
+      onResult: (result) => balance += result);
 
-  print('Red cards:\n$redCards\n');
-  // ----------
+  String f = weightedString('ttf',
+      onFullResult: (result) => balance += result == 't' ? 100 : -100);
 
-  String countdown = inclusive(10, 1).toStringList().intercalate('-');
-  print('$countdown HAPPY NEW YEAR!');
+  List<int> g = weightedList(
+    [100, 100, -100],
+    length: 1,
+    onEachValue: (index, value) => balance += value,
+  );
+
+  List<int> h = weightedListFromMap(
+    {100: 2, -100: 1},
+    length: 1,
+    onEachValue: (index, value) => balance += value,
+  );
+
+  print('Results:\n$a\n$b\n$c\n$d\n$e\n$f\n$g\n$h');
+  print('Final balance: $balance');
 }

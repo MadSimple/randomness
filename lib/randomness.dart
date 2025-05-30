@@ -1,371 +1,456 @@
-library randomness;
-
 import 'dart:core';
 import 'dart:math';
-import 'package:randomness/asciiCodes.dart';
 
-const int asciiZero = 48;
-const int asciiNine = 57;
-
-const asciiStart = 33;
-const asciiEnd = 126;
-const uppercaseStart = 65;
-const uppercaseEnd = 90;
-const lowercaseStart = 97;
-const lowercaseEnd = 122;
-const String everythingElse = 'everythingElse';
-
-String asciiChar(int c) {
-  return String.fromCharCode(c);
-}
-
-class Randomness {
-  static int randomInt({
-    bool cryptographicallySecure = false,
-    Set include = const {
-      [1, 1000]
-    },
-    Set exclude = const {},
-    Map<dynamic, int> weights = const {},
-  }) {
-    Random r;
-    if (cryptographicallySecure) {
-      r = Random.secure();
-    } else {
-      r = Random();
-    }
-    List candidates = [];
-    for (var v in include) {
-      if (v is int) {
-        candidates.add(v);
-      }
-      if (v is List) {
-        for (int i = v[0]; i <= v[1]; i++) {
-          candidates.add(i);
-        }
-      }
-    }
-    candidates = candidates.toSet().toList();
-    for (var v in exclude) {
-      if (v is int) {
-        candidates.remove(v);
-      }
-      if (v is List) {
-        for (int i = v[0]; i <= v[1]; i++) {
-          candidates.remove(i);
-        }
-      }
-    }
-
-    return randomFromList(
-      candidates,
-      cryptographicallySecure: cryptographicallySecure,
-      weights: weights,
-    );
-  }
-
-  static String randomString({
-    int length = 10,
-    bool cryptographicallySecure = false,
-    bool excludeUppercase = false,
-    bool excludeLowercase = false,
-    bool excludeNumbers = false,
-    bool excludeSymbols = false,
-    List<String> exclude = const [],
-    bool includeSpaces = false,
-    Map<String, int> weights = const {},
-  }) {
-    Random r;
-    if (cryptographicallySecure) {
-      r = Random.secure();
-    } else {
-      r = Random();
-    }
-    String temp = '';
-    if (length < 1) {
-      return temp;
-    }
-    List<int> candidateAscii = [];
-    for (int i = includeSpaces ? asciiStart - 1 : asciiStart;
-        i <= asciiEnd;
-        i++) {
-      candidateAscii.add(i);
-    }
-    if (excludeUppercase) {
-      for (int i = uppercaseStart; i <= uppercaseEnd; i++) {
-        candidateAscii.remove(i);
-      }
-    }
-    if (excludeLowercase) {
-      for (int i = lowercaseStart; i <= lowercaseEnd; i++) {
-        candidateAscii.remove(i);
-      }
-    }
-    if (excludeNumbers) {
-      for (int i = asciiZero; i <= asciiNine; i++) {
-        candidateAscii.remove(i);
-      }
-    }
-
-    if (excludeSymbols) {
-      List<int> symbolsAscii = [];
-      for (int i = asciiStart; i <= asciiEnd; i++) {
-        if (!(i >= uppercaseStart && i <= uppercaseEnd) &&
-            !(i >= lowercaseStart && i <= lowercaseEnd) &&
-            !(i >= asciiZero && i <= asciiNine)) {
-          symbolsAscii.add(i);
-        }
-      }
-      for (int i in symbolsAscii) {
-        candidateAscii.remove(i);
-      }
-    }
-
-    for (String s in exclude) {
-      candidateAscii.remove(getAsciiCode(s));
-    }
-
-    Map<dynamic, int> weightsCopy = {};
-    for (var v in weights.keys) {
-      if (v != everythingElse) {
-        weightsCopy.addAll({getAsciiCode(v): weights[v]!});
-      } else {
-        weightsCopy.addAll({v: weights[v]!});
-      }
-    }
-    for (int i in getRange([1, length])) {
-      temp += asciiChar(randomFromList(candidateAscii,
-          cryptographicallySecure: cryptographicallySecure,
-          weights: weightsCopy));
-    }
-    return temp;
-  }
-
-  static String randomNDigits({
-    int numberOfDigits = 1,
-    bool cryptographicallySecure = false,
-    Set excludeDigits = const {},
-    Map<dynamic, int> weights = const {},
-  }) {
-    String answer = '';
-    if (numberOfDigits < 1) {
-      return answer;
-    }
-    for (int i in getRange([1, numberOfDigits])) {
-      answer += randomFromList(getRange([0, 9]),
-              exclude: excludeDigits.toList(),
-              cryptographicallySecure: cryptographicallySecure,
-              weights: weights)
-          .toString();
-    }
-
-    return answer;
-  }
-
-  static double randomDouble({
-    cryptographicallySecure = false,
-    int min = 0,
-    int max = 1,
-  }) {
-    if (!(max > min)) {
-      throw Exception('max not greater than min');
-    }
-    Random r;
-    if (cryptographicallySecure) {
-      r = Random.secure();
-    } else {
-      r = Random();
-    }
-    return r.nextDouble() * (max - min) + min;
-  }
-
-  static dynamic randomFromList(
-    List items, {
-    List exclude = const [],
-    bool cryptographicallySecure = false,
-    Map<dynamic, int> weights = const {}, //Map<index, weight>
-  }) {
-    Random r;
-    if (cryptographicallySecure) {
-      r = Random.secure();
-    } else {
-      r = Random();
-    }
-
-    List itemsCopy = listCopy(items);
-    for (var e in exclude) {
-      itemsCopy.remove(e);
-    }
-
-    if (weights.isEmpty) {
-      return itemsCopy[r.nextInt(itemsCopy.length)];
-    } else {
-      List candidateItems = [];
-      for (var key in weights.keys) {
-        if (itemsCopy.contains(key) || key == everythingElse) {
-          for (var w = 0; w < weights[key]!; w++) {
-            candidateItems.add(key);
-          }
-        }
-      }
-
-      var draw = randomFromList(candidateItems,
-          cryptographicallySecure: cryptographicallySecure);
-      if (draw != everythingElse) {
-        return draw;
-      } else {
-        List everythingElseCandidates = [];
-        for (var i in itemsCopy) {
-          if (!weights.keys.contains(i)) {
-            everythingElseCandidates.add(i);
-          }
-        }
-        return randomFromList(everythingElseCandidates,
-            cryptographicallySecure: cryptographicallySecure);
-      }
-    }
-  }
-}
-
-Map countElementsInList(List l, {bool includeIndexes = false}) {
-  Map elementsSoFar = {};
-  bool allNums = true;
-  //{e: {'type': , 'count': , 'indexes': }}
-  inputList:
-  for (int i = 0; i < l.length; i++) {
-    var currentElement = l[i];
-    bool included = false;
-    for (var e in elementsSoFar.keys) {
-      //if e is Set, use setEquals
-      if (currentElement.runtimeType.toString().contains('Set') &&
-          currentElement.runtimeType.toString() ==
-              elementsSoFar[e]['type'].toString() &&
-          setEquals(currentElement, e)) {
-        allNums = false;
-        elementsSoFar[e]['count']++;
-        if (includeIndexes) {
-          elementsSoFar[e]['indexes'].add(i);
-        }
-        continue inputList;
-      } else {
-        if (currentElement.toString() == e &&
-            currentElement.runtimeType == elementsSoFar[e]['type']) {
-          elementsSoFar[e]['count']++;
-          if (includeIndexes) {
-            elementsSoFar[e]['indexes'].add(i);
-          }
-          continue inputList;
-        }
-      } //non-Sets
-
-    }
-
-    //if not found
-    elementsSoFar.addAll({
-      currentElement.runtimeType.toString().contains('Set')
-          ? currentElement
-          : currentElement.toString(): {
-        'type': currentElement.runtimeType,
-        'count': 1,
-      }
-    });
-    if (includeIndexes) {
-      elementsSoFar[currentElement.toString()].addAll({
-        'indexes': [i]
-      });
-    }
-    if (currentElement is! num) {
-      allNums = false;
-    }
-  }
-
-  //sort numbers
-  if (allNums) {
-    List<num> numElements = [];
-    for (String s in elementsSoFar.keys) {
-      if (s.contains('.')) {
-        numElements.add(double.parse(s));
-      } else {
-        numElements.add(int.parse(s));
-      }
-    }
-    numElements.sort();
-    Map newElements = {};
-    numElements
-        .map((e) =>
-            newElements.addAll({e.toString(): elementsSoFar[e.toString()]}))
-        .toList();
-    return newElements;
-  } else {}
-  return elementsSoFar;
-}
-
-bool setEquals<T>(Set<T>? a, Set<T>? b) {
-  if (a == null) {
-    return b == null;
-  }
-  if (b == null || a.length != b.length) {
-    return false;
-  }
-  if (identical(a, b)) {
-    return true;
-  }
-  for (final T value in a) {
-    if (!b.contains(value)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-List<int> getRange(
-  List<int> l, {
-  int startIndex = 0,
-  int endIndex = 1,
+/// Random integer between [min], inclusive and [max], exclusive.
+/// ```dart
+/// int i = randomInt(-3, 5);
+/// ```
+///
+/// If a Random object is not passed, a new Random() will be created.
+/// Optional [onResult] callback runs after value is attained.
+/// ```dart
+/// int i = randomInt(
+///   -3,
+///   5,
+///   random: Random.secure(),
+///   onResult: (result) {
+///     print('Random int is $result.');
+///   },
+/// );
+/// ```
+int randomInt(
+  int min,
+  int max, {
+  Random? random,
+  Function(int result)? onResult,
 }) {
-  List<int> range = [];
-  for (int i = l[startIndex]; i <= l[endIndex]; i++) {
-    range.add(i);
+  if (min >= max) {
+    throw ArgumentError("Min must be less than max.");
   }
-  return range;
+
+  int result = 0;
+  random ??= Random();
+  result = random.nextInt(max - min) + min;
+
+  if (onResult != null) {
+    onResult(result);
+  }
+
+  return result;
 }
 
-List listCopy(List l) {
-  List temp = [];
-  for (var v in l) {
-    temp.add(v);
+/// Returns a random double between [min], inclusive and [max], exclusive.
+/// ```dart
+/// double n = randomDouble(-3, 5);
+/// ```
+///
+/// If a Random object is not passed, a new Random() will be created.
+/// Optional [onResult] callback runs after value is attained.
+///
+/// The following example should always return the same value
+/// since Random seed is given:
+/// ```dart
+/// double n = randomDouble(
+///     -1,
+///     1,
+///     random: Random(100),
+///     onResult: (result) {
+///       print('Random double is $result.');
+///     },
+///   );
+/// ```
+double randomDouble(
+  double min,
+  double max, {
+  Random? random,
+  Function(double result)? onResult,
+}) {
+  if (min > max) {
+    throw ArgumentError("Min cannot be greater than max.");
   }
-  return temp;
-}
 
-List<dynamic> shuffleList(List list, {cryptographicallySecure = false}) {
-  List listCopy = list;
-  Random r;
-  if (cryptographicallySecure) {
-    r = Random.secure();
+  double result = 0;
+  random ??= Random();
+
+  if (min == max) {
+    result = min;
   } else {
-    r = Random();
+    result = (max - min) * random.nextDouble() + min;
   }
 
-  int count = list.length;
-  while (count > 0) {
-    int index = r.nextInt(count);
-    listCopy.add(listCopy[index]);
-    listCopy.removeAt(index);
-    count--;
+  if (onResult != null) {
+    onResult(result);
   }
 
-  return listCopy;
+  return result;
 }
 
-void printMapElements(Map m) {
-  for (var v in m.keys) {
-    print('$v: ${m[v]}');
+/// Returns a random element from an iterable.
+/// The result is weighted by how many times the element
+/// occurs.
+///
+/// weighted([0, 0, 3]) will return 0 with probability 2/3,
+/// and 3 with probability 1/3.
+///
+/// Can return elements of any type.
+/// If a Random object is not passed, a new Random() will be created.
+/// Optional [onResult] callback runs after value is attained.
+///
+/// The following returns one of two lists and prints the result:
+/// ```dart
+/// List<int> l = weighted(
+///     [
+///       [0, 1],
+///       [1, 2],
+///     ],
+///     random: Random.secure(),
+///     onResult: (result) {
+///       print('Random list: $result.');
+///     },
+///   );
+/// ```
+T weighted<T>(
+  Iterable<T> include, {
+  Random? random,
+  Function(T value)? onResult,
+}) {
+  if (include.isEmpty) {
+    throw ArgumentError("No elements to choose from.");
   }
+
+  List<T> includeCopy = List.from(include);
+  includeCopy.shuffle(random);
+  T result = includeCopy.first;
+
+  if (onResult != null) {
+    onResult(result);
+  }
+
+  return result;
 }
 
-void printListElements(List l) {
-  for (var v in l) {
-    print(v);
+/// Returns a random boolean.
+/// weightedBool() with no arguments returns true or false with
+/// equal probability.
+///
+/// If a Random object is not passed, a new Random() will be created.
+/// Optional [trueWeight] and [falseWeight] default to 1 each.
+/// Optional [onTrue] and [onFalse] are run if result is
+/// true or false, respectively.
+/// Optional [onResult] callback runs afterward.
+///
+/// The following returns true with probability 2/3,
+/// false with probability 1/3.
+/// ```dart
+/// int balance = 100;
+/// bool b = weightedBool(
+///   trueWeight: 2,
+///   falseWeight: 1,
+///   random: Random.secure(),
+///   onTrue: () => balance += 100,
+///   onFalse: () => balance -= 100,
+///   onResult: (result) => print('Result: $result\nBalance: $balance'),
+/// );
+/// ```
+bool weightedBool({
+  int trueWeight = 1,
+  int falseWeight = 1,
+  Random? random,
+  Function()? onTrue,
+  Function()? onFalse,
+  Function(bool result)? onResult,
+}) {
+  if (trueWeight < 0) {
+    throw ArgumentError("'trueWeight' cannot be negative.");
   }
+  if (falseWeight < 0) {
+    throw ArgumentError("'falseWeight' cannot be negative.");
+  }
+
+  if (trueWeight == 0 && falseWeight == 0) {
+    throw ArgumentError("Weights removed both possibilities.");
+  }
+
+  random ??= Random();
+  int r = random.nextInt(trueWeight + falseWeight);
+
+  bool result = r < trueWeight ? true : false;
+
+  if (onTrue != null && result == true) {
+    onTrue();
+  }
+  if (onFalse != null && result == false) {
+    onFalse();
+  }
+  if (onResult != null) {
+    onResult(result);
+  }
+
+  return result;
+}
+
+/// Returns a random element from the keys of a map,
+/// where the values are the weights.
+///
+/// weightedFromMap({0: 1, 1: 2}) returns 0 with
+/// probability 1/3, 1 with probability 2/3.
+///
+/// If a Random object is not passed, a new Random() will be created.
+/// Optional [onResult] runs after value is attained:
+/// ```dart
+/// int i = weightedFromMap(
+///     {0: 1, 1: 2},
+///     random: Random.secure(),
+///     onResult: (result) {
+///       print('Weighted from map: $result.');
+///     },
+///   );
+/// ```
+///
+/// The following returns a random integer less than 100 where even
+/// numbers are weighted 11, odd numbers weighted 10:
+/// ```dart
+/// int j = weightedFromMap(
+///     {
+///       for (int element in List.generate(100, (index) => index))
+///         element: element % 2 == 0 ? 11 : 10,
+///     },
+///     onResult: (result) {
+///       print('Weighted int is $result.');
+///     },
+///   );
+/// ```
+T weightedFromMap<T>(
+  Map<T, int> weights, {
+  Random? random,
+  Function(T result)? onResult,
+}) {
+  if (weights.isEmpty) {
+    throw ArgumentError("No weights given.");
+  }
+
+  T? result;
+
+  int sumWeights = 0;
+  for (T key in weights.keys) {
+    if (weights[key]! < 0) {
+      throw ArgumentError("Weight for $key cannot be negative.");
+    }
+    if (weights[key]! > 0) {
+      sumWeights += weights[key]!;
+    }
+  }
+
+  if (sumWeights == 0) {
+    throw ArgumentError("All weights are 0.");
+  }
+
+  random ??= Random();
+  int randomWeight = random.nextInt(sumWeights);
+
+  int currentWeight = 0;
+  for (T t in weights.keys) {
+    if (currentWeight + weights[t]! > randomWeight) {
+      result = t;
+      break;
+    }
+    currentWeight += weights[t]!;
+  }
+
+  if (onResult != null) {
+    onResult(result as T);
+  }
+
+  return result as T;
+}
+
+/// Constants that can be used for [weightedString]
+const kPrintableCharacters =
+    ' !"#\$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+const kPrintableCharactersWithoutSpace =
+    '!"#\$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+const kDigits = '0123456789';
+const kUppercaseLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const kLowercaseLetters = 'abcdefghijklmnopqrstuvwxyz';
+const kLetters = kUppercaseLetters + kLowercaseLetters;
+const kAlphanumeric = kLetters + kDigits;
+
+/// Returns random characters from a String.
+/// weightedString('hello') returns 'l' with probability 2/5,
+/// each other character has probability 1/5.
+///
+/// Can return more characters if [length] is specified.
+/// weightedString('hello', length: 10) returns something like
+/// 'loloeleloh'.
+///
+/// If a Random object is not passed, a new Random() will be created.
+/// [onEachCharacter] callback runs for each
+/// character in the result.
+/// [onFullResult] callback runs after value is attained.
+/// ```dart
+/// String s = weightedString(
+///   kPrintableCharacters,
+///   length: 5,
+///   random: Random.secure(),
+///   onEachCharacter: (index, c) => print('$c at index $index'),
+///   onFullResult: (result) => print(result),
+/// );
+/// ```
+/// If Random seed is specified, the same result will be returned
+/// every time, but all characters will not necessarily be the same
+/// as each other.
+///
+/// Constants are provided to help generate random strings:
+/// [kPrintableCharacters], [kPrintableCharactersWithoutSpace],
+/// [kDigits], [kUppercaseLetters], [kLowercaseLetters],
+/// [kLetters], [kAlphanumeric]
+String weightedString(
+  String include, {
+  int length = 1,
+  Random? random,
+  Function(int index, String char)? onEachCharacter,
+  Function(String result)? onFullResult,
+}) {
+  if (length < 0) {
+    throw ArgumentError("Length cannot be negative.");
+  }
+
+  String result = '';
+  if (include.isNotEmpty) {
+    random ??= Random();
+    int count = 0;
+
+    while (count < length) {
+      result += include[random.nextInt(include.length)];
+      count++;
+    }
+  } else {
+    result = '';
+  }
+
+  if (onEachCharacter != null) {
+    for (int i = 0; i < result.length; i++) {
+      onEachCharacter(i, result[i]);
+    }
+  }
+
+  if (onFullResult != null) {
+    onFullResult(result);
+  }
+
+  return result;
+}
+
+/// Uses [weighted] but with an extra
+/// [length] parameter to return a List.
+///
+/// [onEachValue] executes after each value in the result
+/// is generated.
+/// [onFullResult] executes once after the entire result
+/// is generated.
+///
+/// The following returns a List of 100 elements where
+/// each element is 1 (probably 1/3) or 3 (probability 2/3).
+/// ```dart
+/// List<int> l = weightedList(
+///   [1, 3, 3],
+///   length: 100,
+///   random: Random.secure(),
+///   onEachValue: (index, value) => print('You got $value at index $index'),
+///   onFullResult: (result) => print(result),
+/// );
+/// ```
+///
+/// Passing a Random with a seed will yield the same result every time,
+/// but each element will not necessarily be equal to each other.
+List<T> weightedList<T>(
+  Iterable<T> include, {
+  Random? random,
+  int length = 1,
+  Function(int index, T value)? onEachValue,
+  Function(List<T> result)? onFullResult,
+}) {
+  List<T> result = [];
+  if (include.isEmpty || length == 0) {
+    result = [];
+  } else if (length < 0) {
+    throw ArgumentError("Length cannot be negative.");
+  } else {
+    for (int i = 0; i < length; i++) {
+      T current = weighted(include, random: random);
+      result.add(current);
+      if (onEachValue != null) {
+        onEachValue(i, current);
+      }
+    }
+  }
+
+  if (onFullResult != null) {
+    onFullResult(result);
+  }
+
+  return result;
+}
+
+/// Uses [weightedFromMap] but with [length] parameter
+/// to return a List.
+///
+/// [onEachValue] executes after each value in the result
+/// is generated.
+/// [onFullResult] executes once after the entire result
+/// is generated.
+///
+/// The following returns a List of 100 elements, each
+/// element is 1 (probability 2/3) or 3 (probability 1/3):
+/// ```dart
+/// List<int> l = weightedListFromMap(
+///   {1: 2, 3: 1},
+///   length: 100,
+///   random: Random.secure(),
+///   onEachValue: (index, value) => print('You got $value at index $index'),
+///   onFullResult: (result) => print(result),
+/// );
+/// ```
+///
+/// Passing a Random with a seed will yield the same List every time,
+/// but each element will not necessarily be equal to each other.
+List<T> weightedListFromMap<T>(
+  Map<T, int> weights, {
+  Random? random,
+  int length = 1,
+  Function(int index, T value)? onEachValue,
+  Function(List<T> result)? onFullResult,
+}) {
+  List<T> result = [];
+  if (length == 0 || weights.isEmpty) {
+    result = [];
+  } else if (length < 0) {
+    throw ArgumentError("Length cannot be negative.");
+  } else {
+    int sumWeights = 0;
+    for (T t in weights.keys) {
+      if (weights[t]! < 0) {
+        throw ArgumentError("Element '$t' cannot have negative weight.");
+      }
+      sumWeights += weights[t]!;
+    }
+
+    if (sumWeights == 0) {
+      result = [];
+    } else {
+      for (int i = 0; i < length; i++) {
+        T current = weightedFromMap(weights, random: random);
+        result.add(current);
+        if (onEachValue != null) {
+          onEachValue(i, current);
+        }
+      }
+    }
+  }
+
+  if (onFullResult != null) {
+    onFullResult(result);
+  }
+
+  return result;
 }
