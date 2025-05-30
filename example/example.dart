@@ -1,55 +1,26 @@
-import 'package:randomness/randomness.dart';
-import 'dart:core';
+import 'package:heart/heart.dart';
 
-
-///Run program, compare console log to code
+/// Small sample of package features
 void main() {
+  List<String> cardValues =
+      ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'] * 4;
 
-  print('''
-  Equivalent to Random().nextInt(5)
-  ${Randomness.randomInt(include: {0,1,2,3,4})}
-  ${Randomness.randomInt(include: {[0,4]})}
-  ${Randomness.randomInt(include: {0,1,[2,4]})}
-  ${Randomness.randomInt(include: {[0,100]}, exclude: {5,[6,100]})}
-  
-  default is 1 to 1000 inclusive
-  ${Randomness.randomInt()}
- 
-  
-  1 through 100 inclusive, cryptographically secure
-  ${Randomness.randomInt(include: {[1,100]}, cryptographicallySecure: true)}
+  List<String> cardSuits =
+      ['spades'] * 13 + ['hearts'] * 13 + ['diamonds'] * 13 + ['clubs'] * 13;
 
-  
-  Give weights. 2/3 chance of 0, 1/3 chance of 1, 2, 3, or 4:
-  ${Randomness.randomInt(include: {0,1,2,3,4}, weights: {0: 2, everythingElse: 1})}
-  
-  Ignores included elements not in weights. This will always give 0.
-  ${Randomness.randomInt(include: {0,1,2,3,4}, weights: {0:1})}
-  
-  Default length is 10. Default doesn't generate spaces.
-  ${Randomness.randomString()}
-  
-  Strings include numbers, uppercase, lowercase, symbols, and spaces. This will generate numbers and spaces.
-  ${Randomness.randomString(length: 100, includeSpaces: true, excludeSymbols: true, excludeUppercase: true, excludeLowercase: true)}
-  
-  cryptographically secure String with half A's
-  ${Randomness.randomString(length: 50, cryptographicallySecure: true, weights: {'A': 1, everythingElse: 1})}
-  
-  random double, cryptographically secure
-  ${Randomness.randomDouble(min: -3, max: -1, cryptographicallySecure: true)}
-  
-  random from List. Weights may not work with certain data types.
-  ${Randomness.randomFromList([{1,2}, 'a', 3], weights: {'a': 1, everythingElse: 1}, cryptographicallySecure: true)}
-  
-  
-  random n-digit number. Returns a String since parsing would ignore
-  0's at the beginning, and cannot parse very large integers.
-  ${Randomness.randomNDigits(numberOfDigits: 100, excludeDigits: {0,1,2,3}, weights: {4:1, everythingElse:1})}
-  Gives average of half 4's, half 5, 6, 7, 8, or 9
-  
-  ''');
+  List deckOfCards = zip([cardValues, cardSuits]);
+  List shuffledDeck = deckOfCards.shuffled();
 
+  print('Sorted deck: \n$deckOfCards\n');
 
+  print('Shuffled deck: \n$shuffledDeck\n');
 
+  List redCards = shuffledDeck
+      .filter((card) => card.contains('hearts') || card.contains('diamonds'));
 
+  print('Red cards:\n$redCards\n');
+  // ----------
+
+  String countdown = inclusive(10, 1).toStringList().intercalate('-');
+  print('$countdown HAPPY NEW YEAR!');
 }
